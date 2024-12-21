@@ -1,0 +1,37 @@
+name: Device Initialization
+
+on:
+  workflow_dispatch:
+    inputs:
+      device_sn:
+        description: "Device Serial Number"
+        required: true
+      customer_key:
+        description: "Customer Key"
+        required: true
+
+jobs:
+  setup-device:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone Repository
+        run: git clone https://github.com/your-username/device_init.git
+
+      - name: Generate API Token
+        run: |
+          echo "Fetching API token..."
+          API_TOKEN=$(curl -X POST -H "Content-Type: application/json" \
+            -d '{"device_sn": "${{ github.event.inputs.device_sn }}", "customer_key": "${{ github.event.inputs.customer_key }}"}' \
+            https://your-server.com/api/get-token | jq -r '.api_token')
+
+          echo "API_TOKEN=$API_TOKEN" > device_init/.env
+          echo ".env file created with API_TOKEN."
+
+      - name: Push Updated Repo
+        run: |
+          cd device_init
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add .env
+          git commit -m "Add .env with API token"
+          git push origin main
